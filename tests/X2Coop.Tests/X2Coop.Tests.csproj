@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    T2.2 codec tests (xunit, net472).
+
+    The codec sources are COMPILED IN via <Compile Include> links rather than a
+    ProjectReference: X2Coop.csproj references UnityEngine et al., and pulling
+    the whole mod assembly into a test host would drag UnityEngine.Debug with
+    it. The codec layer only needs FlyingWormConsole3.LiteNetLib.Utils
+    (NetDataWriter/NetDataReader) + Log - so the tests ship a tiny X2Coop.Log
+    stub (TestLog.cs) and reference Assembly-CSharp.dll for the LiteNetLib
+    types. NetDataWriter/Reader are pure managed code (System.* only - verified
+    against the decompile), so Assembly-CSharp loads fine in a plain .NET
+    Framework test host; no UnityEngine reference is needed or wanted here.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <DebugType>portable</DebugType>
+
+    <GameDir Condition="'$(X2_DIR)' != ''">$(X2_DIR)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">E:\GOG Games\Xenonauts 2</GameDir>
+    <ManagedDir>$(GameDir)\Xenonauts2_Data\Managed</ManagedDir>
+
+    <!-- Same escape hatch as X2Coop.csproj: game assemblies carry net48-ish
+         attributes RAR would otherwise reject on a net472 compile. -->
+    <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
+  </PropertyGroup>
+
+  <!-- Codec sources under test (linked, not copied). -->
+  <ItemGroup>
+    <Compile Include="..\..\src\Net\Protocol.cs" Link="Net\Protocol.cs" />
+    <Compile Include="..\..\src\Net\Messages.cs" Link="Net\Messages.cs" />
+    <Compile Include="..\..\src\Net\MsgCodec.cs" Link="Net\MsgCodec.cs" />
+    <Compile Include="..\..\src\Net\CodecSelfTest.cs" Link="Net\CodecSelfTest.cs" />
+    <!-- T2.3: the parity comparer + x2coop.* settings parser are deliberately
+         game-reference-free so they link here too. -->
+    <Compile Include="..\..\src\Session\SessionParity.cs" Link="Session\SessionParity.cs" />
+    <!-- T3.3: guest save filename fallback chain is deliberately game-free
+         so it links + runs here. -->
+    <Compile Include="..\..\src\Session\SaveFileNamer.cs" Link="Session\SaveFileNamer.cs" />
+    <Compile Include="..\..\src\DebugSettings.cs" Link="DebugSettings.cs" />
+    <!-- T2.4: banner state machine is deliberately game-free (no UnityEngine)
+         so it links + runs here. -->
+    <Compile Include="..\..\src\UI\CoopPanelState.cs" Link="UI\CoopPanelState.cs" />
+    <!-- T5.2: send-tick accumulator + packet packer are deliberately
+         game-free (no Artitas/UnityEngine - DeltaSender owns them in-game)
+         so they link + run here. -->
+    <Compile Include="..\..\src\Replication\DeltaQueue.cs" Link="Replication\DeltaQueue.cs" />
+    <Compile Include="..\..\src\Replication\DeltaPacker.cs" Link="Replication\DeltaPacker.cs" />
+    <!-- T5.3: the entity-id map, pos coalescer and type resolver are
+         deliberately game-free (world access arrives as delegates) so they
+         link + run here; StateApplier/MappingEntityConverter stay in-game. -->
+    <Compile Include="..\..\src\Replication\EntityIdMap.cs" Link="Replication\EntityIdMap.cs" />
+    <Compile Include="..\..\src\Replication\PosCoalescer.cs" Link="Replication\PosCoalescer.cs" />
+    <Compile Include="..\..\src\Replication\ComponentTypeResolver.cs" Link="Replication\ComponentTypeResolver.cs" />
+    <!-- T5.4: the in-flight op tracker is deliberately game-free (ints/enums
+         only) so it links + runs here; the firewall/applier wiring stays
+         in-game. -->
+    <Compile Include="..\..\src\Replication\InFlightOp.cs" Link="Replication\InFlightOp.cs" />
+    <!-- T5.5: the canonicalizing fsData writer (sorted object keys, type-tagged
+         wire-normalized scalars, item sort, SHA-256 digest, first-diff helper)
+         is deliberately game-free except FullSerializer.fsData - which lives
+         in firstpass (pure managed, verified). -->
+    <Compile Include="..\..\src\Replication\CanonicalJson.cs" Link="Replication\CanonicalJson.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- NetDataWriter/NetDataReader/DeliveryMethod live in Assembly-CSharp.
+         Private=true so the test host finds it in bin. -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <!-- T5.5: fsData/fsJsonPrinter/fsJsonParser live in firstpass - pure
+         managed FullSerializer, loads fine in the test host. -->
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- net472 compile without a targeting pack installed. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

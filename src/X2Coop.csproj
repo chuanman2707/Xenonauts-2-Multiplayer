@@ -1,0 +1,79 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <DebugType>portable</DebugType>
+    <!-- Assembly version attributes live in Properties/AssemblyInfo.cs (single source: 0.1.0) -->
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+
+    <!-- Game install dir: env X2_DIR wins, else the default GOG path. -->
+    <GameDir Condition="'$(X2_DIR)' != ''">$(X2_DIR)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">E:\GOG Games\Xenonauts 2</GameDir>
+    <ManagedDir>$(GameDir)\Xenonauts2_Data\Managed</ManagedDir>
+
+    <!-- Shipped 0Harmony 2.3.6 targets net48 and Assembly-CSharp depends on it, so
+         RAR drops both from a net472 compile (MSB3274/MSB3275) and every game type
+         becomes invisible. The game runs on Unity's Mono where the net472/net48
+         split is meaningless — ignore the attribute-version mismatch. -->
+    <ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>true</ResolveAssemblyReferenceIgnoreTargetFrameworkAttributeVersionMismatch>
+  </PropertyGroup>
+
+  <!-- T0.7: probe patches (src/Probes) compile only under X2COOP_PROBES, defined
+       for Debug - deploy.ps1 builds Debug by default; Release strips them. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);X2COOP_PROBES</DefineConstants>
+  </PropertyGroup>
+
+  <!-- Compile-time references to shipped game assemblies only.
+       Private=false: never copied to bin/ — the game already loads all of these.
+       FullSerializer.* (fsSerializer) lives inside Assembly-CSharp-firstpass.dll
+       (confirmed: ilspycmd -l c shows "Class FullSerializer.fsSerializer"). -->
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(ManagedDir)\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(ManagedDir)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ManagedDir)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- T2.4: GUIStyle.fontStyle/alignment pull FontStyle + TextAnchor. -->
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedDir)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- R8 probe: UnityEngine.Input.GetKey lives in the legacy input module. -->
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>$(ManagedDir)\log4net.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- Build-only: lets any dev box compile net472 without the .NET Framework
+       targeting pack installed. PrivateAssets keeps it out of the output. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,34 @@
+﻿{
+    "version": "0.1.0",
+    "asset": {
+        "Source": "Manual",
+        "UID": "6e6bc764-960e-4370-a3ff-e0d5d66828ce",
+        "WorkshopID": "",
+        "Name": "X2 Co-op",
+        "Description": "",
+        "Visibility": "Private",
+        "Author": "",
+        "Website": "",
+        "Credits": "",
+        "Tags": [],
+        "Dependencies": [
+            {
+                "UID": "7409d306-8813-4ae2-b2e2-8e94d4dc39f1",
+                "Version": {
+                    "&v": "7.27.11"
+                },
+                "DisplayName": "Xenonauts"
+            }
+        ],
+        "LoadBefore": [],
+        "LoadAfter": [],
+        "IncompatibleWith": [],
+        "RemoveFiles": [],
+        "SupportedLanguages": [
+            "en-US"
+        ],
+        "Version": "0.1.0",
+        "$t": "14"
+    },
+    "$t": "15"
+}
